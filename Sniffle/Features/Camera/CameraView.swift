@@ -12,12 +12,29 @@ struct CameraView: View {
 
     let store: StoreOf<CameraFeature>
     @State private var isPressed = false
+    private let detectionColors: [Color] = [
+        .green,
+        .yellow,
+        .cyan,
+        .orange,
+        .red,
+        .mint,
+        .blue,
+        .pink
+    ]
 
     var body: some View {
         ZStack {
             if store.isCameraOn {
                 CameraPreview(session: CameraService.shared.getSession())
                     .ignoresSafeArea()
+                    .overlay {
+                        DetectionOverlay(
+                            detections: store.detections,
+                            imageSize: store.detectionImageSize,
+                            colors: detectionColors
+                        )
+                    }
             } else {
                 Color.black.ignoresSafeArea()
             }
@@ -89,5 +106,54 @@ struct CameraView: View {
         .onAppear {
             store.send(.onAppear)
         }
+        .onDisappear {
+            store.send(.onDisappear)
+        }
+    }
+}
+
+private struct DetectionOverlay: View {
+    let detections: [CameraDetectionOverlayItem]
+    let imageSize: CGSize
+    let colors: [Color]
+
+    var body: some View {
+        GeometryReader { proxy in
+            let viewSize = proxy.size
+
+            ZStack(alignment: .topLeading) {
+                ForEach(detections) { detection in
+                    let frame = aspectFillDisplayRect(
+                        for: detection.normalizedRect,
+                        imageSize: imageSize,
+                        viewSize: viewSize
+                    )
+                    let color = colors[detection.colorIndex % colors.count]
+                    let labelText = String(
+                        format: "%@ %.0f%%",
+                        detection.className,
+                        Double(detection.confidence * 100)
+                    )
+
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(color, lineWidth: 2.5)
+                        .frame(width: frame.width, height: frame.height)
+                        .position(x: frame.midX, y: frame.midY)
+
+                    Text(labelText)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(color.opacity(0.92), in: Capsule())
+                        .position(
+                            x: max(frame.minX + 44, frame.minX + min(frame.width * 0.5, 120)),
+                            y: max(frame.minY + 12, 18)
+                        )
+                }
+            }
+            .animation(.easeInOut(duration: 0.12), value: detections)
+        }
+        .allowsHitTesting(false)
     }
 }
