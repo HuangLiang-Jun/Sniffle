@@ -13,7 +13,7 @@ struct CameraClient: Sendable {
     var requestPermission: @Sendable () async -> Bool
     var startCamera: @Sendable () async -> Bool
     var stopCamera: @Sendable () async -> Void
-    var setDetectionHandler: @Sendable (@escaping @Sendable ([CameraDetectionOverlayItem], CGSize) -> Void) -> Void
+    var setDetectionHandler: @Sendable (@escaping @Sendable (CameraDetectionOverlayItem, CGSize) -> Void) -> Void
     var clearDetectionHandler: @Sendable () -> Void
 }
 

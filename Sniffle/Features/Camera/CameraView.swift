@@ -30,7 +30,7 @@ struct CameraView: View {
                     .ignoresSafeArea()
                     .overlay {
                         DetectionOverlay(
-                            detections: store.detections,
+                            detection: store.detection,
                             imageSize: store.detectionImageSize,
                             colors: detectionColors
                         )
@@ -113,7 +113,7 @@ struct CameraView: View {
 }
 
 private struct DetectionOverlay: View {
-    let detections: [CameraDetectionOverlayItem]
+    let detection: CameraDetectionOverlayItem
     let imageSize: CGSize
     let colors: [Color]
 
@@ -122,37 +122,35 @@ private struct DetectionOverlay: View {
             let viewSize = proxy.size
 
             ZStack(alignment: .topLeading) {
-                ForEach(detections) { detection in
-                    let frame = aspectFillDisplayRect(
-                        for: detection.normalizedRect,
-                        imageSize: imageSize,
-                        viewSize: viewSize
+                let frame = aspectFillDisplayRect(
+                    for: detection.normalizedRect,
+                    imageSize: imageSize,
+                    viewSize: viewSize
+                )
+                let color = colors[detection.colorIndex % colors.count]
+                let labelText = String(
+                    format: "%@ %.0f%%",
+                    detection.className,
+                    Double(detection.confidence * 100)
+                )
+                
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(color, lineWidth: 2.5)
+                    .frame(width: frame.width, height: frame.height)
+                    .position(x: frame.midX, y: frame.midY)
+                
+                Text(labelText)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(color.opacity(0.92), in: Capsule())
+                    .position(
+                        x: max(frame.minX + 44, frame.minX + min(frame.width * 0.5, 120)),
+                        y: max(frame.minY + 12, 18)
                     )
-                    let color = colors[detection.colorIndex % colors.count]
-                    let labelText = String(
-                        format: "%@ %.0f%%",
-                        detection.className,
-                        Double(detection.confidence * 100)
-                    )
-
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(color, lineWidth: 2.5)
-                        .frame(width: frame.width, height: frame.height)
-                        .position(x: frame.midX, y: frame.midY)
-
-                    Text(labelText)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 5)
-                        .background(color.opacity(0.92), in: Capsule())
-                        .position(
-                            x: max(frame.minX + 44, frame.minX + min(frame.width * 0.5, 120)),
-                            y: max(frame.minY + 12, 18)
-                        )
-                }
             }
-            .animation(.easeInOut(duration: 0.12), value: detections)
+            .animation(.easeInOut(duration: 0.12), value: detection)
         }
         .allowsHitTesting(false)
     }

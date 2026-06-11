@@ -23,7 +23,7 @@ struct CameraFeature: Reducer {
         var hasCameraPermission = false
         var desiredCameraOn = false
         var permissionDenied = false
-        var detections: [CameraDetectionOverlayItem] = []
+        var detection: CameraDetectionOverlayItem = CameraDetectionOverlayItem()
         var detectionImageSize: CGSize = .zero
     }
 
@@ -33,7 +33,7 @@ struct CameraFeature: Reducer {
         case toggleCamera
         case permissionResponse(Bool)
         case cameraStarted(Bool)
-        case detectionResult([CameraDetectionOverlayItem], CGSize)
+        case detectionResult(CameraDetectionOverlayItem, CGSize)
     }
 
     var body: some Reducer<State, Action> {
@@ -41,7 +41,7 @@ struct CameraFeature: Reducer {
             switch action {
             case .onAppear:
                 state.desiredCameraOn = true
-                state.detections = []
+                state.detection = CameraDetectionOverlayItem()
                 state.detectionImageSize = .zero
                 if state.hasCameraPermission {
                     return .merge(
@@ -81,7 +81,7 @@ struct CameraFeature: Reducer {
                 state.desiredCameraOn = false
                 state.isCameraOn = false
                 state.permissionDenied = false
-                state.detections = []
+                state.detection = .init()
                 state.detectionImageSize = .zero
                 return .merge(
                     .cancel(id: CameraFeatureCancelID.permissionRequest),
@@ -92,8 +92,8 @@ struct CameraFeature: Reducer {
                     }
                 )
 
-            case let .detectionResult(detections, imageSize):
-                state.detections = detections
+            case let .detectionResult(detection, imageSize):
+                state.detection = detection
                 state.detectionImageSize = imageSize
                 return .none
 
@@ -102,7 +102,7 @@ struct CameraFeature: Reducer {
                     state.desiredCameraOn = false
                     state.isCameraOn = false
                     state.permissionDenied = false
-                    state.detections = []
+                    state.detection = .init()
                     state.detectionImageSize = .zero
                     return .merge(
                         .cancel(id: CameraFeatureCancelID.permissionRequest),
@@ -139,7 +139,7 @@ struct CameraFeature: Reducer {
                     state.isCameraOn = false
                     state.permissionDenied = true
                     state.desiredCameraOn = false
-                    state.detections = []
+                    state.detection = .init()
                     state.detectionImageSize = .zero
                     return .merge(
                         .cancel(id: CameraFeatureCancelID.permissionRequest),
