@@ -6,12 +6,15 @@
 //
 
 import AVFoundation
+import CoreGraphics
 import Dependencies
 
 struct CameraClient: Sendable {
     var requestPermission: @Sendable () async -> Bool
     var startCamera: @Sendable () async -> Bool
     var stopCamera: @Sendable () async -> Void
+    var setDetectionHandler: @Sendable (@escaping @Sendable (CameraDetectionOverlayItem, CGSize) -> Void) -> Void
+    var clearDetectionHandler: @Sendable () -> Void
 }
 
 extension DependencyValues {
@@ -31,6 +34,16 @@ extension CameraClient: DependencyKey {
         },
         stopCamera: {
             await CameraService.shared.stop()
+        },
+        setDetectionHandler: { handler in
+            Task { @MainActor in
+                CameraService.shared.setDetectionHandler(handler)
+            }
+        },
+        clearDetectionHandler: {
+            Task { @MainActor in
+                CameraService.shared.clearDetectionHandler()
+            }
         }
     )
 }

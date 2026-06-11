@@ -1,5 +1,5 @@
 {
-  "originHash" : "e7024a9cd3fa1c40fa4003b3b2b186c00ba720c787de8ba274caf8fc530677e8",
+  "originHash" : "42bc9b0e3fd719901a10f679bb250e06195a044c829364fac5fafaea702349e9",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -125,6 +125,15 @@
       "state" : {
         "revision" : "cb281f343fd953280336dcbd3822cdf47c182f5b",
         "version" : "1.10.0"
+      }
+    },
+    {
+      "identity" : "yolo-ios-app",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ultralytics/yolo-ios-app",
+      "state" : {
+        "branch" : "main",
+        "revision" : "2abc6f0bddd4b76364f3bf448ce8d6f4c5b81562"
       }
     }
   ],

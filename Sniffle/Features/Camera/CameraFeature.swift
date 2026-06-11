@@ -6,6 +6,7 @@
 //
 
 import ComposableArchitecture
+import CoreGraphics
 
 fileprivate enum CameraFeatureCancelID: String, Sendable {
     case permissionRequest
@@ -22,13 +23,17 @@ struct CameraFeature: Reducer {
         var hasCameraPermission = false
         var desiredCameraOn = false
         var permissionDenied = false
+        var detection: CameraDetectionOverlayItem = CameraDetectionOverlayItem()
+        var detectionImageSize: CGSize = .zero
     }
 
     enum Action {
         case onAppear
+        case onDisappear
         case toggleCamera
         case permissionResponse(Bool)
         case cameraStarted(Bool)
+        case detectionResult(CameraDetectionOverlayItem, CGSize)
     }
 
     var body: some Reducer<State, Action> {
@@ -36,28 +41,69 @@ struct CameraFeature: Reducer {
             switch action {
             case .onAppear:
                 state.desiredCameraOn = true
-
+                state.detection = CameraDetectionOverlayItem()
+                state.detectionImageSize = .zero
                 if state.hasCameraPermission {
-                    return .run { [cameraClient] send in
-                        let started = await cameraClient.startCamera()
-                        try Task.checkCancellation()
-                        await send(.cameraStarted(started))
-                    }
-                    .cancellable(id: CameraFeatureCancelID.cameraStart, cancelInFlight: true)
+                    return .merge(
+                        .run { [cameraClient] send in
+                            cameraClient.setDetectionHandler { detections, imageSize in
+                                Task { @MainActor in
+                                    await send(.detectionResult(detections, imageSize))
+                                }
+                            }
+                        },
+                        .run { [cameraClient] send in
+                            let started = await cameraClient.startCamera()
+                            try Task.checkCancellation()
+                            await send(.cameraStarted(started))
+                        }
+                        .cancellable(id: CameraFeatureCancelID.cameraStart, cancelInFlight: true)
+                    )
                 }
 
-                return .run { [cameraClient] send in
-                    let granted = await cameraClient.requestPermission()
-                    try Task.checkCancellation()
-                    await send(.permissionResponse(granted))
-                }
-                .cancellable(id: CameraFeatureCancelID.permissionRequest, cancelInFlight: true)
+                return .merge(
+                    .run { [cameraClient] send in
+                        cameraClient.setDetectionHandler { detections, imageSize in
+                            Task { @MainActor in
+                                await send(.detectionResult(detections, imageSize))
+                            }
+                        }
+                    },
+                    .run { [cameraClient] send in
+                        let granted = await cameraClient.requestPermission()
+                        try Task.checkCancellation()
+                        await send(.permissionResponse(granted))
+                    }
+                    .cancellable(id: CameraFeatureCancelID.permissionRequest, cancelInFlight: true)
+                )
+
+            case .onDisappear:
+                state.desiredCameraOn = false
+                state.isCameraOn = false
+                state.permissionDenied = false
+                state.detection = .init()
+                state.detectionImageSize = .zero
+                return .merge(
+                    .cancel(id: CameraFeatureCancelID.permissionRequest),
+                    .cancel(id: CameraFeatureCancelID.cameraStart),
+                    .run { [cameraClient] _ in
+                        cameraClient.clearDetectionHandler()
+                        await cameraClient.stopCamera()
+                    }
+                )
+
+            case let .detectionResult(detection, imageSize):
+                state.detection = detection
+                state.detectionImageSize = imageSize
+                return .none
 
             case .toggleCamera:
                 if state.isCameraOn {
                     state.desiredCameraOn = false
                     state.isCameraOn = false
                     state.permissionDenied = false
+                    state.detection = .init()
+                    state.detectionImageSize = .zero
                     return .merge(
                         .cancel(id: CameraFeatureCancelID.permissionRequest),
                         .cancel(id: CameraFeatureCancelID.cameraStart),
@@ -93,6 +139,8 @@ struct CameraFeature: Reducer {
                     state.isCameraOn = false
                     state.permissionDenied = true
                     state.desiredCameraOn = false
+                    state.detection = .init()
+                    state.detectionImageSize = .zero
                     return .merge(
                         .cancel(id: CameraFeatureCancelID.permissionRequest),
                         .cancel(id: CameraFeatureCancelID.cameraStart),
