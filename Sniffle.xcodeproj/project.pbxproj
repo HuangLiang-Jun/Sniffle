@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		57E9E5272FD96586005AD59A /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 57E9E5262FD96586005AD59A /* ComposableArchitecture */; };
+		57E9E5942FDA9732005AD59A /* UltralyticsYOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 57E9E5932FDA9732005AD59A /* UltralyticsYOLO */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57E9E5942FDA9732005AD59A /* UltralyticsYOLO in Frameworks */,
 				57E9E5272FD96586005AD59A /* ComposableArchitecture in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -84,6 +86,7 @@
 			name = Sniffle;
 			packageProductDependencies = (
 				57E9E5262FD96586005AD59A /* ComposableArchitecture */,
+				57E9E5932FDA9732005AD59A /* UltralyticsYOLO */,
 			);
 			productName = Sniffle;
 			productReference = 57E9E5172FD96410005AD59A /* Sniffle.app */;
@@ -115,6 +118,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				57E9E5252FD96586005AD59A /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+				57E9E5922FDA9732005AD59A /* XCRemoteSwiftPackageReference "yolo-ios-app" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 57E9E5182FD96410005AD59A /* Products */;
@@ -370,6 +374,14 @@
 				minimumVersion = 1.26.0;
 			};
 		};
+		57E9E5922FDA9732005AD59A /* XCRemoteSwiftPackageReference "yolo-ios-app" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ultralytics/yolo-ios-app";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -377,6 +389,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 57E9E5252FD96586005AD59A /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
 			productName = ComposableArchitecture;
+		};
+		57E9E5932FDA9732005AD59A /* UltralyticsYOLO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 57E9E5922FDA9732005AD59A /* XCRemoteSwiftPackageReference "yolo-ios-app" */;
+			productName = UltralyticsYOLO;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
