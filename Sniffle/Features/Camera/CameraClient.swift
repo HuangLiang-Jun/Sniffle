@@ -36,10 +36,14 @@ extension CameraClient: DependencyKey {
             await CameraService.shared.stop()
         },
         setDetectionHandler: { handler in
-            CameraService.shared.setDetectionHandler(handler)
+            Task { @MainActor in
+                CameraService.shared.setDetectionHandler(handler)
+            }
         },
         clearDetectionHandler: {
-            CameraService.shared.clearDetectionHandler()
+            Task { @MainActor in
+                CameraService.shared.clearDetectionHandler()
+            }
         }
     )
 }
