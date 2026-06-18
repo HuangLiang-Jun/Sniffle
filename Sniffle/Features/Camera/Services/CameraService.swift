@@ -25,11 +25,13 @@ final class CameraService: NSObject, @unchecked Sendable {
     private var predictor: BasePredictor?
     private var isLoadingModel = false
     private var isProcessingFrame = false
+    private var lastDetectionPublishTime = Date.distantPast
+    private let detectionPublishInterval: TimeInterval = 0.1
 
-    var onDetectionsChanged: ((CameraDetectionOverlayItem, CGSize) -> Void)?
+    var onDetectionsChanged: (([CameraDetectionOverlayItem], CGSize) -> Void)?
 
     func setDetectionHandler(
-        _ handler: @escaping @Sendable (CameraDetectionOverlayItem, CGSize) -> Void
+        _ handler: @escaping @Sendable ([CameraDetectionOverlayItem], CGSize) -> Void
     ) {
         sessionQueue.async {
             self.onDetectionsChanged = handler
@@ -181,18 +183,24 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
 
 extension CameraService: ResultsListener, InferenceTimeListener {
     func on(result: YOLOResult) {
-        for (index, box) in result.boxes.enumerated() {
-            let item = CameraDetectionOverlayItem(
-                id: "\(index)-\(box.index)-\(box.cls)-\(box.xywhn.minX)-\(box.xywhn.minY)-\(box.xywhn.width)-\(box.xywhn.height)",
+        let now = Date()
+        guard now.timeIntervalSince(lastDetectionPublishTime) >= detectionPublishInterval else {
+            return
+        }
+        lastDetectionPublishTime = now
+
+        let detections = result.boxes.enumerated().map { index, box in
+            CameraDetectionOverlayItem(
+                id: "\(index)-\(box.index)-\(box.cls)",
                 normalizedRect: box.xywhn,
                 className: box.cls,
                 confidence: box.conf,
                 colorIndex: box.index
             )
-            
-            DispatchQueue.main.async { [weak self] in
-                self?.onDetectionsChanged?(item, result.orig_shape)
-            }
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.onDetectionsChanged?(detections, result.orig_shape)
         }
     }
 
