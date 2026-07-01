@@ -137,6 +137,8 @@ final class CameraService: NSObject, @unchecked Sendable {
                 switch result {
                 case let .success(predictor):
                     predictor.capturesOriginalImage = false
+                    predictor.setConfidenceThreshold(confidence: 0.55)
+                    predictor.setNumItemsThreshold(numItems: 5)
                     self.predictor = predictor
                 case .failure(let error):
                     print("Failed to load YOLO predictor: \(error)")
